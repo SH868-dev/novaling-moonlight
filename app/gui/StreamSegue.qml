@@ -62,7 +62,7 @@ Item {
     function sessionFinished(portTestResult)
     {
         if (portTestResult !== 0 && portTestResult !== -1 && streamSegueErrorDialog.text) {
-            streamSegueErrorDialog.text += "\n\n" + qsTr("This PC's Internet connection is blocking Moonlight. Streaming over the Internet may not work while connected to this network.")
+            streamSegueErrorDialog.text += "\n\n" + qsTr("This PC's Internet connection is blocking NovaLinG. Streaming over the Internet may not work while connected to this network.")
         }
 
         // Re-enable GUI gamepad usage now
@@ -200,35 +200,77 @@ Item {
         sourceComponent: Item {}
     }
 
-    Row {
+    Rectangle {
+        id: statusCard
         anchors.centerIn: parent
-        spacing: 5
+        width: Math.min(parent.width - 64, Math.max(380, stageRow.implicitWidth + 64))
+        height: stageRow.implicitHeight + 56
+        radius: 18
+        color: "#FFFEF9"
+        border.color: "#CDD6C7"
+        border.width: 1
+        visible: stageLabel.visible || stageSpinner.visible
 
-        BusyIndicator {
-            id: stageSpinner
-            running: visible
-            visible: false
-        }
+        Row {
+            id: stageRow
+            anchors.centerIn: parent
+            spacing: 16
 
-        Label {
-            id: stageLabel
-            height: stageSpinner.height
-            text: stageText
-            font.pointSize: 20
-            verticalAlignment: Text.AlignVCenter
+            BusyIndicator {
+                id: stageSpinner
+                running: visible
+                visible: false
+                width: 40
+                height: 40
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
-            wrapMode: Text.Wrap
+            Column {
+                spacing: 4
+                anchors.verticalCenter: parent.verticalCenter
+
+                Label {
+                    text: "NOVALING STREAM"
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#557462"
+                }
+
+                Label {
+                    id: stageLabel
+                    text: stageText
+                    font.pointSize: 16
+                    font.bold: true
+                    color: "#24372F"
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.Wrap
+                }
+            }
         }
     }
 
-    Label {
-        id: hintText
+    Rectangle {
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 50
+        anchors.bottomMargin: 44
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pointSize: 18
-        verticalAlignment: Text.AlignVCenter
+        width: Math.min(parent.width - 48, hintText.implicitWidth + 36)
+        height: hintText.implicitHeight + 20
+        radius: 12
+        color: "#EDF2E7"
+        border.color: "#BDD0C2"
+        border.width: 1
+        visible: hintText.visible && hintText.text.length > 0
 
-        wrapMode: Text.Wrap
+        Label {
+            id: hintText
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - 28)
+            font.pointSize: 12
+            font.bold: true
+            color: "#28584A"
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.Wrap
+        }
     }
 }

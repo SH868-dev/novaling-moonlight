@@ -435,6 +435,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Moonlight Game Streaming Project");
     QCoreApplication::setOrganizationDomain("moonlight-stream.com");
     QCoreApplication::setApplicationName("Moonlight");
+    QGuiApplication::setApplicationDisplayName("NovaLinG");
 
     if (QFile(QDir::currentPath() + "/portable.dat").exists()) {
         QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -728,8 +729,8 @@ int main(int argc, char *argv[])
     // Set our app name for SDL to use with PulseAudio and PipeWire. This matches what we
     // provide as our app name to libsoundio too. On SDL 2.0.18+, SDL_APP_NAME is also used
     // for screensaver inhibitor reporting.
-    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_APP_NAME, "Moonlight");
-    SDL_SetHint(SDL_HINT_APP_NAME, "Moonlight");
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_APP_NAME, "NovaLinG");
+    SDL_SetHint(SDL_HINT_APP_NAME, "NovaLinG");
 
     // SDL will try to lock the mouse cursor on Wayland if it's not visible in order to
     // support applications that assume they can warp the cursor (which isn't possible
@@ -975,21 +976,24 @@ int main(int argc, char *argv[])
     // We require the Material theme
     QQuickStyle::setStyle("Material");
 
-    // Our icons are styled for a dark theme, so we do not allow the user to override this
-    qputenv("QT_QUICK_CONTROLS_MATERIAL_THEME", "Dark");
+    // NovaLinG Sage brand palette (Light surface + Deep Sage forest accent)
+    qputenv("QT_QUICK_CONTROLS_MATERIAL_THEME", "Light");
 
     // These are defaults that we allow the user to override
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_MATERIAL_ACCENT")) {
-        qputenv("QT_QUICK_CONTROLS_MATERIAL_ACCENT", "Purple");
+        qputenv("QT_QUICK_CONTROLS_MATERIAL_ACCENT", "#28584A");
     }
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_MATERIAL_VARIANT")) {
         qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
     }
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_MATERIAL_PRIMARY")) {
-        // Qt 6.9 began to use a different shade of Material.Indigo when we use a dark theme
-        // (which is all the time). The new color looks washed out, so manually specify the
-        // old primary color unless the user overrides it themselves.
-        qputenv("QT_QUICK_CONTROLS_MATERIAL_PRIMARY", "#3F51B5");
+        qputenv("QT_QUICK_CONTROLS_MATERIAL_PRIMARY", "#28584A");
+    }
+    if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_MATERIAL_BACKGROUND")) {
+        qputenv("QT_QUICK_CONTROLS_MATERIAL_BACKGROUND", "#F5F5EF");
+    }
+    if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_MATERIAL_FOREGROUND")) {
+        qputenv("QT_QUICK_CONTROLS_MATERIAL_FOREGROUND", "#24372F");
     }
 
     QQmlApplicationEngine engine;

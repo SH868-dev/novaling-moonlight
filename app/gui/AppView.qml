@@ -16,9 +16,9 @@ CenteredGridView {
     id: appGrid
     focus: true
     activeFocusOnTab: true
-    topMargin: 20
-    bottomMargin: 5
-    cellWidth: 230; cellHeight: 297;
+    topMargin: 28
+    bottomMargin: 24
+    cellWidth: 244; cellHeight: 324;
 
     function computerLost()
     {
@@ -71,8 +71,10 @@ CenteredGridView {
     model: appModel
 
     delegate: NavigableItemDelegate {
-        width: 220; height: 287;
+        id: appCardDelegate
+        width: 226; height: 306;
         grid: appGrid
+        padding: 0
 
         property alias appContextMenu: appContextMenuLoader.item
         property alias appNameText: appNameTextLoader.item
@@ -80,126 +82,241 @@ CenteredGridView {
         // Dim the app if it's hidden
         opacity: model.hidden ? 0.4 : 1.0
 
-        Image {
-            property bool isPlaceholder: false
+        background: Rectangle {
+            radius: 16
+            color: appCardDelegate.down ? "#EDF2E7" : (appCardDelegate.hovered || appCardDelegate.highlighted ? "#F9FAF3" : "#FFFEF9")
+            border.color: (appCardDelegate.hovered || appCardDelegate.highlighted)
+                          ? "#28584A"
+                          : (model.running ? "#2A6F56" : "#E1E6DC")
+            border.width: (appCardDelegate.hovered || appCardDelegate.highlighted || model.running) ? 2 : 1
 
-            id: appIcon
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: 10
-            source: model.boxart
-
-            onSourceSizeChanged: {
-                // Nearly all of Nvidia's official box art does not match the dimensions of placeholder
-                // images, however the one known exception is Overcooked. Therefore, we only execute
-                // the image size checks if this is not an app collector game. We know the officially
-                // supported games all have box art, so this check is not required.
-                if (!model.isAppCollectorGame &&
-                    ((sourceSize.width === 130 && sourceSize.height === 180) || // GFE 2.0 placeholder image
-                     (sourceSize.width === 628 && sourceSize.height === 888) || // GFE 3.0 placeholder image
-                     (sourceSize.width === 200 && sourceSize.height === 266)))  // Our no_app_image.png
-                {
-                    isPlaceholder = true
-                }
-                else
-                {
-                    isPlaceholder = false
-                }
-
-                width = 200
-                height = 267
-            }
-
-            // Display a tooltip with the full name if it's truncated
-            ToolTip.text: model.name
-            ToolTip.delay: 1000
-            ToolTip.timeout: 5000
-            ToolTip.visible: (parent.hovered || parent.highlighted) && (!appNameText || appNameText.truncated)
+            Behavior on border.color { ColorAnimation { duration: 120 } }
         }
 
-        Loader {
-            active: model.running
-            asynchronous: true
-            anchors.fill: appIcon
+        Rectangle {
+            id: artFrame
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: 10
+            height: 232
+            radius: 11
+            clip: true
+            color: "#EDF2E7"
+            border.color: "#E1E6DC"
+            border.width: 1
 
-            sourceComponent: Item {
-                RoundButton {
-                    // Don't steal focus from the toolbar buttons
-                    focusPolicy: Qt.NoFocus
+            Image {
+                property bool isPlaceholder: false
 
-                    anchors.horizontalCenterOffset: appIcon.isPlaceholder ? -47 : 0
-                    anchors.verticalCenterOffset: appIcon.isPlaceholder ? -75 : -60
-                    anchors.centerIn: parent
-                    implicitWidth: 85
-                    implicitHeight: 85
+                id: appIcon
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                source: model.boxart
+                visible: !isPlaceholder
 
-                    icon.source: "qrc:/res/play_arrow_FILL1_wght700_GRAD200_opsz48.svg"
-                    icon.width: 75
-                    icon.height: 75
-
-                    onClicked: {
-                        launchOrResumeSelectedApp(true)
+                onSourceSizeChanged: {
+                    // Nearly all of Nvidia's official box art does not match the dimensions of placeholder
+                    // images, however the one known exception is Overcooked. Therefore, we only execute
+                    // the image size checks if this is not an app collector game. We know the officially
+                    // supported games all have box art, so this check is not required.
+                    if (!model.isAppCollectorGame &&
+                        ((sourceSize.width === 130 && sourceSize.height === 180) || // GFE 2.0 placeholder image
+                         (sourceSize.width === 628 && sourceSize.height === 888) || // GFE 3.0 placeholder image
+                         (sourceSize.width === 200 && sourceSize.height === 266)))  // Our no_app_image.png
+                    {
+                        isPlaceholder = true
                     }
-
-                    ToolTip.text: qsTr("Resume Game")
-                    ToolTip.delay: 1000
-                    ToolTip.timeout: 3000
-                    ToolTip.visible: hovered
-
-                    Material.background: "#D0808080"
+                    else
+                    {
+                        isPlaceholder = false
+                    }
                 }
 
-                RoundButton {
-                    // Don't steal focus from the toolbar buttons
-                    focusPolicy: Qt.NoFocus
+                // Display a tooltip with the full name if it's truncated
+                ToolTip.text: model.name
+                ToolTip.delay: 1000
+                ToolTip.timeout: 5000
+                ToolTip.visible: (appCardDelegate.hovered || appCardDelegate.highlighted) && (!appNameText || appNameText.truncated)
+            }
 
-                    anchors.horizontalCenterOffset: appIcon.isPlaceholder ? 47 : 0
-                    anchors.verticalCenterOffset: appIcon.isPlaceholder ? -75 : 60
+            // Styled NovaLinG Sage artwork when host has no box art
+            Rectangle {
+                anchors.fill: parent
+                visible: appIcon.isPlaceholder
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#28584A" }
+                    GradientStop { position: 1.0; color: "#193930" }
+                }
+
+                Image {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: model.running ? 16 : 44
+                    source: "qrc:/res/moonlight.svg"
+                    sourceSize.width: 52
+                    sourceSize.height: 52
+                    opacity: 0.9
+                }
+            }
+
+            // Running status badge
+            Rectangle {
+                visible: model.running
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.margins: 8
+                radius: 10
+                height: 22
+                width: runningBadgeLabel.implicitWidth + 18
+                color: "#28584A"
+                border.color: "#BDD0C2"
+                border.width: 1
+                z: 2
+
+                Label {
+                    id: runningBadgeLabel
                     anchors.centerIn: parent
-                    implicitWidth: 85
-                    implicitHeight: 85
+                    text: "● 실행 중"
+                    color: "#F2F4DF"
+                    font.pointSize: 8.5
+                    font.bold: true
+                }
+            }
 
-                    icon.source: "qrc:/res/stop_FILL1_wght700_GRAD200_opsz48.svg"
-                    icon.width: 75
-                    icon.height: 75
+            Loader {
+                active: model.running
+                asynchronous: true
+                anchors.fill: parent
+                z: 3
 
-                    onClicked: {
-                        doQuitGame()
+                sourceComponent: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "#5516241E"
                     }
 
-                    ToolTip.text: qsTr("Quit Game")
-                    ToolTip.delay: 1000
-                    ToolTip.timeout: 3000
-                    ToolTip.visible: hovered
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 14
 
-                    Material.background: "#D0808080"
+                        RoundButton {
+                            // Don't steal focus from the toolbar buttons
+                            focusPolicy: Qt.NoFocus
+
+                            implicitWidth: 68
+                            implicitHeight: 68
+
+                            icon.source: "qrc:/res/play_arrow_FILL1_wght700_GRAD200_opsz48.svg"
+                            icon.width: 40
+                            icon.height: 40
+
+                            onClicked: {
+                                launchOrResumeSelectedApp(true)
+                            }
+
+                            ToolTip.text: qsTr("Resume Game")
+                            ToolTip.delay: 1000
+                            ToolTip.timeout: 3000
+                            ToolTip.visible: hovered
+
+                            Material.background: "#28584A"
+                        }
+
+                        RoundButton {
+                            // Don't steal focus from the toolbar buttons
+                            focusPolicy: Qt.NoFocus
+
+                            implicitWidth: 68
+                            implicitHeight: 68
+
+                            icon.source: "qrc:/res/stop_FILL1_wght700_GRAD200_opsz48.svg"
+                            icon.width: 36
+                            icon.height: 36
+
+                            onClicked: {
+                                doQuitGame()
+                            }
+
+                            ToolTip.text: qsTr("Quit Game")
+                            ToolTip.delay: 1000
+                            ToolTip.timeout: 3000
+                            ToolTip.visible: hovered
+
+                            Material.background: "#AF5948"
+                        }
+                    }
+                }
+            }
+
+            Loader {
+                id: appNameTextLoader
+                active: appIcon.isPlaceholder
+
+                // This loader is not asynchronous to avoid noticeable differences
+                // in the time in which the text loads for each game.
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: model.running ? 92 : 120
+
+                sourceComponent: Label {
+                    id: appNameText
+                    text: model.name
+                    color: "#F2F4DF"
+                    font.pointSize: 15
+                    font.bold: true
+                    leftPadding: 14
+                    rightPadding: 14
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideRight
                 }
             }
         }
 
-        Loader {
-            id: appNameTextLoader
-            active: appIcon.isPlaceholder
+        // Bottom Card Footer: Always show clean app title + launch indicator
+        Item {
+            anchors.top: artFrame.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
 
-            // This loader is not asynchronous to avoid noticeable differences
-            // in the time in which the text loads for each game.
-
-            width: appIcon.width
-            height: model.running ? 175 : appIcon.height
-
-            anchors.left: appIcon.left
-            anchors.right: appIcon.right
-            anchors.bottom: appIcon.bottom
-
-            sourceComponent: Label {
-                id: appNameText
+            Label {
+                anchors.left: parent.left
+                anchors.right: launchBadge.left
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
                 text: model.name
-                font.pointSize: 22
-                leftPadding: 20
-                rightPadding: 20
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
+                color: "#24372F"
+                font.pointSize: 11
+                font.bold: true
                 elide: Text.ElideRight
+            }
+
+            Rectangle {
+                id: launchBadge
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                radius: 8
+                height: 26
+                width: launchBadgeLabel.implicitWidth + 16
+                color: model.running ? "#E6F3EC" : "#EDF2E7"
+                border.color: "#BDD0C2"
+                border.width: 1
+
+                Label {
+                    id: launchBadgeLabel
+                    anchors.centerIn: parent
+                    text: model.running ? "이어하기" : "실행 ▶"
+                    color: "#28584A"
+                    font.pointSize: 9
+                    font.bold: true
+                }
             }
         }
 
@@ -332,14 +449,25 @@ CenteredGridView {
         }
     }
 
-    Row {
+    Rectangle {
         anchors.centerIn: parent
-        spacing: 5
         visible: appGrid.count === 0
+        width: Math.min(parent.width - 64, emptyAppsLabel.implicitWidth + 56)
+        height: emptyAppsLabel.implicitHeight + 44
+        radius: 16
+        color: "#FFFEF9"
+        border.color: "#E1E6DC"
+        border.width: 1
 
         Label {
+            id: emptyAppsLabel
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - 36)
+            color: "#5F7065"
             text: qsTr("This computer doesn't seem to have any applications or some applications are hidden")
-            font.pointSize: 20
+            font.pointSize: 13
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap
         }

@@ -1,1 +1,10 @@
-<?xml version="1.0" standalone="no"?><!-- Generator: Gravit.io --><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="isolation:isolate" viewBox="0 0 256 256" width="256" height="256"><g><circle vector-effect="non-scaling-stroke" cx="128" cy="128" r="128" fill="rgb(86,92,100)"/><circle vector-effect="non-scaling-stroke" cx="128.00000000000003" cy="128.00000000000003" r="96" fill="rgb(255,255,255)"/><path d=" M 137.66 132 L 224 132 L 224 124 L 137.66 124 L 198.71 62.95 L 193.05 57.29 L 132 118.34 L 132 32 L 124 32 L 124 118.34 L 62.95 57.29 L 57.29 62.95 L 118.34 124 L 32 124 L 32 132 L 118.34 132 L 57.29 193.05 L 62.95 198.71 L 124 137.66 L 124 224 L 132 224 L 132 137.66 L 193.05 198.71 L 198.71 193.05 L 137.66 132 Z " fill-rule="evenodd" fill="rgb(86,92,100)"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#28584A"/>
+  <rect x="14" y="14" width="228" height="228" rx="50" fill="none" stroke="#557462" stroke-width="4" stroke-opacity="0.55"/>
+  <!-- N -->
+  <path d="M54 180V76h22l44 66V76h22v104h-22l-44-66v66H54z" fill="#F2F4DF"/>
+  <!-- L -->
+  <path d="M158 76h22v84h34v20h-56V76z" fill="#F2F4DF"/>
+  <!-- South-East Stream Arrow -->
+  <path d="M180 54h28v28h-10V71l-18 18-7-7 18-18h-11V54z" fill="#BDD0C2"/>
+</svg>

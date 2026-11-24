@@ -19,17 +19,24 @@ ApplicationWindow {
     property bool clearOnBack: false
 
     id: window
+    title: "NovaLinG"
     width: 1280
-    height: 600
+    height: 700
+
+    Material.theme: Material.Light
+    Material.primary: "#28584A"
+    Material.accent: "#28584A"
+    Material.background: "#F5F5EF"
+    Material.foreground: "#24372F"
 
     // This function runs prior to creation of the initial StackView item
     function doEarlyInit() {
-        // Override the background color to Material 2 colors for Qt 6.5+
-        // in order to improve contrast between GFE's placeholder box art
-        // and the background of the app grid.
-        if (SystemProperties.usesMaterial3Theme) {
-            Material.background = "#303030"
-        }
+        // Keep the warm NovaLinG Sage Ivory background across both Qt 5 and Qt 6 Material 3.
+        Material.theme = Material.Light
+        Material.primary = "#28584A"
+        Material.accent = "#28584A"
+        Material.background = "#F5F5EF"
+        Material.foreground = "#24372F"
 
         SdlGamepadKeyNavigation.enable()
     }
@@ -243,16 +250,30 @@ ApplicationWindow {
 
     header: ToolBar {
         id: toolBar
-        height: 60
-        anchors.topMargin: 5
-        anchors.bottomMargin: 5
+        height: 64
+        Material.primary: "#28584A"
+        Material.foreground: "#F2F4DF"
+
+        background: Rectangle {
+            color: "#28584A"
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: "#1E4439"
+            }
+        }
 
         Label {
             id: titleLabel
-            visible: toolBar.width > 700
+            visible: toolBar.width > 760
             anchors.fill: parent
             text: stackView.currentItem.objectName
-            font.pointSize: 20
+            color: "#F2F4DF"
+            font.pointSize: 16
+            font.bold: true
             elide: Label.ElideRight
             horizontalAlignment: Qt.AlignHCenter
             verticalAlignment: Qt.AlignVCenter
@@ -260,8 +281,8 @@ ApplicationWindow {
 
         RowLayout {
             spacing: 10
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
             anchors.fill: parent
 
             NavigableToolButton {
@@ -277,11 +298,55 @@ ApplicationWindow {
                 }
             }
 
+            // NovaLinG Sage Brand Identity
+            Row {
+                spacing: 10
+                Layout.alignment: Qt.AlignVCenter
+
+                Rectangle {
+                    width: 34
+                    height: 34
+                    radius: 9
+                    color: "#1F473B"
+                    border.color: "#557462"
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/res/moonlight.svg"
+                        sourceSize.width: 26
+                        sourceSize.height: 26
+                    }
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 0
+
+                    Label {
+                        text: "NovaLinG"
+                        color: "#F2F4DF"
+                        font.pointSize: 13
+                        font.bold: true
+                    }
+
+                    Label {
+                        text: "REMOTE CLIENT"
+                        color: "#BDD0C2"
+                        font.pointSize: 7.5
+                        font.bold: true
+                    }
+                }
+            }
+
             // This label will appear when the window gets too small and
             // we need to ensure the toolbar controls don't collide
             Label {
                 id: titleRowLabel
-                font.pointSize: titleLabel.font.pointSize
+                font.pointSize: 14
+                font.bold: true
+                color: "#F2F4DF"
                 elide: Label.ElideRight
                 horizontalAlignment: Qt.AlignHCenter
                 verticalAlignment: Qt.AlignVCenter
@@ -293,13 +358,25 @@ ApplicationWindow {
                 text: !titleLabel.visible ? stackView.currentItem.objectName : ""
             }
 
-            Label {
-                id: versionLabel
+            Rectangle {
+                id: versionPill
                 visible: stackView.currentItem instanceof SettingsView
-                text: qsTr("Version %1").arg(SystemProperties.versionString)
-                font.pointSize: 12
-                horizontalAlignment: Qt.AlignRight
-                verticalAlignment: Qt.AlignVCenter
+                radius: 8
+                color: "#1F473B"
+                border.color: "#557462"
+                border.width: 1
+                Layout.preferredWidth: versionLabel.implicitWidth + 20
+                Layout.preferredHeight: 28
+                Layout.alignment: Qt.AlignVCenter
+
+                Label {
+                    id: versionLabel
+                    anchors.centerIn: parent
+                    text: "v" + SystemProperties.versionString
+                    color: "#F2F4DF"
+                    font.pointSize: 10
+                    font.bold: true
+                }
             }
 
             NavigableToolButton {
@@ -371,7 +448,7 @@ ApplicationWindow {
 
                 function updateAvailable(version, url)
                 {
-                    ToolTip.text = qsTr("Update available for Moonlight: Version %1").arg(version)
+                    ToolTip.text = qsTr("Update available for NovaLinG: Version %1").arg(version)
                     updateButton.browserUrl = url
                     updateButton.visible = true
                 }
@@ -456,7 +533,7 @@ ApplicationWindow {
 
     ErrorMessageDialog {
         id: noHwDecoderDialog
-        text: qsTr("No functioning hardware accelerated video decoder was detected by Moonlight. " +
+        text: qsTr("No functioning hardware accelerated video decoder was detected by NovaLinG. " +
                    "Your streaming performance may be severely degraded in this configuration.")
         helpText: qsTr("Click the Help button for more information on solving this problem.")
         helpUrl: "https://github.com/moonlight-stream/moonlight-docs/wiki/Fixing-Hardware-Decoding-Problems"
@@ -465,7 +542,7 @@ ApplicationWindow {
     NavigableMessageDialog {
         id: wow64Dialog
         standardButtons: Dialog.Ok | Dialog.Cancel
-        text: qsTr("This version of Moonlight isn't optimized for your PC. Please download the '%1' version of Moonlight for the best streaming performance.").arg(SystemProperties.friendlyNativeArchName)
+        text: qsTr("This version of NovaLinG isn't optimized for your PC. Please download the '%1' version for the best streaming performance.").arg(SystemProperties.friendlyNativeArchName)
         onAccepted: {
             Qt.openUrlExternally("https://github.com/moonlight-stream/moonlight-qt/releases");
         }
@@ -474,7 +551,7 @@ ApplicationWindow {
     ErrorMessageDialog {
         id: unmappedGamepadDialog
         property string unmappedGamepads : ""
-        text: qsTr("Moonlight detected gamepads without a mapping:") + "\n" + unmappedGamepads
+        text: qsTr("NovaLinG detected gamepads without a mapping:") + "\n" + unmappedGamepads
         helpTextSeparator: "\n\n"
         helpText: qsTr("Click the Help button for information on how to map your gamepads.")
         helpUrl: "https://github.com/moonlight-stream/moonlight-docs/wiki/Gamepad-Mapping"
@@ -534,14 +611,26 @@ ApplicationWindow {
         }
 
         ColumnLayout {
+            spacing: 10
+            Layout.minimumWidth: 340
+
             Label {
                 text: addPcDialog.label
+                color: "#24372F"
+                font.pointSize: 12
                 font.bold: true
+            }
+
+            Label {
+                text: "예: 1.244.152.178:49000"
+                color: "#5F7065"
+                font.pointSize: 9.5
             }
 
             TextField {
                 id: editText
                 Layout.fillWidth: true
+                placeholderText: "IP 또는 IP:포트 입력"
                 focus: true
 
                 Keys.onReturnPressed: {

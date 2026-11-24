@@ -15,9 +15,9 @@ CenteredGridView {
     id: pcGrid
     focus: true
     activeFocusOnTab: true
-    topMargin: 20
-    bottomMargin: 5
-    cellWidth: 310; cellHeight: 330;
+    topMargin: 28
+    bottomMargin: 24
+    cellWidth: 336; cellHeight: 244;
     objectName: qsTr("Computers")
 
     Component.onCompleted: {
@@ -82,82 +82,240 @@ CenteredGridView {
         return model
     }
 
-    Row {
+    Rectangle {
         anchors.centerIn: parent
-        spacing: 5
         visible: pcGrid.count === 0
+        width: Math.min(parent.width - 64, emptyStateRow.implicitWidth + 56)
+        height: emptyStateRow.implicitHeight + 48
+        radius: 16
+        color: "#FFFEF9"
+        border.color: "#E1E6DC"
+        border.width: 1
 
-        BusyIndicator {
-            id: searchSpinner
-            visible: StreamingPreferences.enableMdns
-            running: visible
-        }
+        Row {
+            id: emptyStateRow
+            anchors.centerIn: parent
+            spacing: 14
 
-        Label {
-            height: searchSpinner.height
-            elide: Label.ElideRight
-            text: StreamingPreferences.enableMdns ? qsTr("Searching for compatible hosts on your local network...")
-                                                  : qsTr("Automatic PC discovery is disabled. Add your PC manually.")
-            font.pointSize: 20
-            verticalAlignment: Text.AlignVCenter
-            wrapMode: Text.Wrap
+            BusyIndicator {
+                id: searchSpinner
+                visible: StreamingPreferences.enableMdns
+                running: visible
+                width: 34
+                height: 34
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Label {
+                anchors.verticalCenter: parent.verticalCenter
+                elide: Label.ElideRight
+                color: "#24372F"
+                text: StreamingPreferences.enableMdns ? qsTr("Searching for compatible hosts on your local network...")
+                                                      : qsTr("Automatic PC discovery is disabled. Add your PC manually.")
+                font.pointSize: 13
+                font.bold: true
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.Wrap
+            }
         }
     }
 
     model: computerModel
 
     delegate: NavigableItemDelegate {
-        width: 300; height: 320;
+        id: pcCardDelegate
+        width: 316; height: 224;
         grid: pcGrid
+        padding: 0
 
         property alias pcContextMenu : pcContextMenuLoader.item
 
-        Image {
-            id: pcIcon
-            anchors.horizontalCenter: parent.horizontalCenter
-            source: "qrc:/res/desktop_windows-48px.svg"
-            sourceSize {
-                width: 200
-                height: 200
+        background: Rectangle {
+            radius: 16
+            color: pcCardDelegate.down ? "#EDF2E7" : (pcCardDelegate.hovered || pcCardDelegate.highlighted ? "#F9FAF3" : "#FFFEF9")
+            border.color: (pcCardDelegate.hovered || pcCardDelegate.highlighted)
+                          ? "#28584A"
+                          : (model.online ? "#BDD0C2" : "#E1E6DC")
+            border.width: (pcCardDelegate.hovered || pcCardDelegate.highlighted) ? 2 : 1
+            opacity: model.online || model.statusUnknown ? 1.0 : 0.82
+
+            Behavior on border.color { ColorAnimation { duration: 120 } }
+            Behavior on color { ColorAnimation { duration: 120 } }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 18
+            spacing: 12
+
+            // Top Row: Icon Badge + Semantic Status Pill
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Rectangle {
+                    id: pcIconBadge
+                    width: 48
+                    height: 48
+                    radius: 12
+                    color: model.online ? "#EDF2E7" : "#F0F1EB"
+                    border.color: model.online ? "#BDD0C2" : "#E1E6DC"
+                    border.width: 1
+
+                    Image {
+                        id: pcIcon
+                        anchors.centerIn: parent
+                        visible: !model.statusUnknown
+                        source: "qrc:/res/desktop_windows-48px.svg"
+                        sourceSize.width: 26
+                        sourceSize.height: 26
+                        opacity: model.online ? 1.0 : 0.45
+                    }
+
+                    BusyIndicator {
+                        id: statusUnknownSpinner
+                        anchors.centerIn: parent
+                        width: 28
+                        height: 28
+                        visible: model.statusUnknown
+                        running: visible
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Rectangle {
+                    id: statusPill
+                    radius: 13
+                    height: 26
+                    Layout.preferredWidth: statusRow.implicitWidth + 20
+                    color: model.statusUnknown
+                           ? "#EDF2E7"
+                           : (!model.online
+                              ? "#EFEFE8"
+                              : (!model.paired
+                                 ? "#FEF3C7"
+                                 : (model.busy ? "#EDF2E7" : "#E6F3EC")))
+                    border.color: model.statusUnknown
+                                  ? "#BDD0C2"
+                                  : (!model.online
+                                     ? "#DCE1D7"
+                                     : (!model.paired
+                                        ? "#F59E0B"
+                                        : "#BDD0C2"))
+                    border.width: 1
+
+                    Row {
+                        id: statusRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Rectangle {
+                            width: 7
+                            height: 7
+                            radius: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !model.statusUnknown && (model.paired || !model.online)
+                            color: !model.online ? "#8A978B" : (model.busy ? "#28584A" : "#2A6F56")
+                        }
+
+                        Image {
+                            id: stateIcon
+                            width: 13
+                            height: 13
+                            sourceSize.width: 13
+                            sourceSize.height: 13
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !model.statusUnknown && model.online && !model.paired
+                            source: "qrc:/res/baseline-lock-24px.svg"
+                        }
+
+                        Label {
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.pointSize: 9.5
+                            font.bold: true
+                            color: model.statusUnknown
+                                   ? "#5F7065"
+                                   : (!model.online
+                                      ? "#8A978B"
+                                      : (!model.paired
+                                         ? "#92400E"
+                                         : (model.busy ? "#28584A" : "#2A6F56")))
+                            text: model.statusUnknown
+                                  ? "..."
+                                  : (!model.online
+                                     ? qsTr("Offline")
+                                     : (!model.paired
+                                        ? qsTr("Unpaired")
+                                        : (model.busy ? "Streaming" : qsTr("Online"))))
+                        }
+                    }
+                }
             }
-        }
 
-        Image {
-            // TODO: Tooltip
-            id: stateIcon
-            anchors.horizontalCenter: pcIcon.horizontalCenter
-            anchors.verticalCenter: pcIcon.verticalCenter
-            anchors.verticalCenterOffset: !model.online ? -18 : -16
-            visible: !model.statusUnknown && (!model.online || !model.paired)
-            source: !model.online ? "qrc:/res/warning_FILL1_wght300_GRAD200_opsz24.svg" : "qrc:/res/baseline-lock-24px.svg"
-            sourceSize {
-                width: !model.online ? 75 : 70
-                height: !model.online ? 75 : 70
+            // Middle: Host Name & Contextual Hint
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 4
+
+                Label {
+                    id: pcNameText
+                    text: model.name
+                    Layout.fillWidth: true
+                    color: "#24372F"
+                    font.pointSize: 16
+                    font.bold: true
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: "#5F7065"
+                    font.pointSize: 9.5
+                    elide: Text.ElideRight
+                    text: model.statusUnknown
+                          ? "호스트 상태를 확인하는 중입니다..."
+                          : (!model.online
+                             ? (model.wakeable ? "오프라인 · 우클릭으로 원격 켜기(WoL) 가능" : "오프라인 · 우클릭으로 옵션 확인")
+                             : (!model.paired
+                                ? "클릭하여 4자리 PIN으로 기기 연결"
+                                : (model.busy ? "원격 세션 실행 중 · 클릭하여 이어하기" : "연결 준비 완료 · 클릭하여 앱 런처 열기")))
+                }
             }
-        }
 
-        BusyIndicator {
-            id: statusUnknownSpinner
-            anchors.horizontalCenter: pcIcon.horizontalCenter
-            anchors.verticalCenter: pcIcon.verticalCenter
-            anchors.verticalCenterOffset: -15
-            width: 75
-            height: 75
-            visible: model.statusUnknown
-            running: visible
-        }
+            // Bottom Action Bar
+            Rectangle {
+                Layout.fillWidth: true
+                height: 36
+                radius: 10
+                color: (model.online && model.paired)
+                       ? (pcCardDelegate.hovered || pcCardDelegate.highlighted ? "#1F473B" : "#28584A")
+                       : (model.online ? "#EDF2E7" : "#F3F4EE")
+                border.color: (model.online && model.paired)
+                              ? "#28584A"
+                              : (model.online ? "#BDD0C2" : "#E1E6DC")
+                border.width: 1
 
-        Label {
-            id: pcNameText
-            text: model.name
-
-            width: parent.width
-            anchors.top: pcIcon.bottom
-            anchors.bottom: parent.bottom
-            font.pointSize: 30
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-            elide: Text.ElideRight
+                Label {
+                    anchors.centerIn: parent
+                    font.pointSize: 10.5
+                    font.bold: true
+                    color: (model.online && model.paired)
+                           ? "#F2F4DF"
+                           : (model.online ? "#28584A" : "#5F7065")
+                    text: model.statusUnknown
+                          ? "확인 중..."
+                          : (!model.online
+                             ? (model.wakeable ? "원격 켜기 (WoL) / 메뉴" : "옵션 보기")
+                             : (!model.paired
+                                ? "PIN 페어링 시작"
+                                : (model.busy ? "세션 열기 →" : "접속하기 →")))
+                }
+            }
         }
 
         // Display a tooltip with the full name if it's truncated
@@ -294,17 +452,69 @@ CenteredGridView {
         helpUrl: "https://github.com/moonlight-stream/moonlight-docs/wiki/Setup-Guide"
     }
 
-    NavigableMessageDialog {
+    NavigableDialog {
         id: pairDialog
         closePolicy: Popup.CloseOnEscape
 
         // don't allow edits to the rest of the window while open
         property string pin : "0000"
-        text:qsTr("Please enter %1 on your host PC. This dialog will close when pairing is completed.").arg(pin)+"\n\n"+
-             qsTr("If your host PC is running Sunshine, navigate to the Sunshine web UI to enter the PIN.")
         standardButtons: Dialog.Cancel
         onRejected: {
             // FIXME: We should interrupt pairing here
+        }
+
+        ColumnLayout {
+            spacing: 14
+            Layout.minimumWidth: 360
+
+            Label {
+                text: "PIN 페어링"
+                color: "#28584A"
+                font.pointSize: 13
+                font.bold: true
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 10
+
+                Repeater {
+                    model: 4
+                    Rectangle {
+                        width: 56
+                        height: 64
+                        radius: 12
+                        color: "#EDF2E7"
+                        border.color: "#BDD0C2"
+                        border.width: 1.5
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: pairDialog.pin.length > index ? pairDialog.pin.charAt(index) : "•"
+                            color: "#28584A"
+                            font.pointSize: 22
+                            font.bold: true
+                        }
+                    }
+                }
+            }
+
+            Label {
+                Layout.fillWidth: true
+                Layout.maximumWidth: 380
+                color: "#24372F"
+                wrapMode: Text.Wrap
+                text: qsTr("Please enter %1 on your host PC. This dialog will close when pairing is completed.").arg(pairDialog.pin)
+            }
+
+            Label {
+                Layout.fillWidth: true
+                Layout.maximumWidth: 380
+                color: "#5F7065"
+                font.pointSize: 9.5
+                wrapMode: Text.Wrap
+                text: "호스트 PC의 NovaLinG [원격 접속] 탭 또는 웹 콘솔에서 위 4자리 숫자를 입력해 승인하세요."
+            }
         }
     }
 

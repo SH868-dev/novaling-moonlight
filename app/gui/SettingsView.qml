@@ -94,17 +94,16 @@ Flickable {
     }
 
     Column {
-        padding: 10
+        padding: 16
+        rightPadding: 8
         id: settingsColumn1
         width: settingsPage.width / 2
-        spacing: 15
+        spacing: 16
 
-        GroupBox {
+        SageGroupBox {
             id: basicSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Basic Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Basic Settings")
 
             Column {
                 anchors.fill: parent
@@ -874,13 +873,10 @@ Flickable {
             }
         }
 
-        GroupBox {
-
+        SageGroupBox {
             id: audioSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Audio Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Audio Settings")
 
             Column {
                 anchors.fill: parent
@@ -968,12 +964,10 @@ Flickable {
             }
         }
 
-        GroupBox {
+        SageGroupBox {
             id: hostSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Host Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Host Settings")
 
             Column {
                 anchors.fill: parent
@@ -1008,12 +1002,10 @@ Flickable {
             }
         }
 
-        GroupBox {
+        SageGroupBox {
             id: uiSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("UI Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("UI Settings")
 
             Column {
                 anchors.fill: parent
@@ -1310,19 +1302,18 @@ Flickable {
     }
 
     Column {
-        padding: 10
-        rightPadding: 20
+        padding: 16
+        leftPadding: 8
+        rightPadding: 22
         anchors.left: settingsColumn1.right
         id: settingsColumn2
         width: settingsPage.width / 2
-        spacing: 15
+        spacing: 16
 
-        GroupBox {
+        SageGroupBox {
             id: inputSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Input Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Input Settings")
 
             Column {
                 anchors.fill: parent
@@ -1465,12 +1456,10 @@ Flickable {
             }
         }
 
-        GroupBox {
+        SageGroupBox {
             id: gamepadSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Gamepad Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Gamepad Settings")
 
             Column {
                 anchors.fill: parent
@@ -1540,12 +1529,10 @@ Flickable {
             }
         }
 
-        GroupBox {
+        SageGroupBox {
             id: advancedSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
-            padding: 12
-            title: "<font color=\"skyblue\">" + qsTr("Advanced Settings") + "</font>"
-            font.pointSize: 12
+            title: qsTr("Advanced Settings")
 
             Column {
                 anchors.fill: parent

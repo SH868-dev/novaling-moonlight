@@ -54,23 +54,49 @@ Item {
         ComputerManager.quitAppCompleted.disconnect(quitAppCompleted)
     }
 
-    Row {
+    Rectangle {
         anchors.centerIn: parent
-        spacing: 5
+        width: Math.min(parent.width - 64, Math.max(360, quitStageRow.implicitWidth + 64))
+        height: quitStageRow.implicitHeight + 56
+        radius: 18
+        color: "#FFFEF9"
+        border.color: "#CDD6C7"
+        border.width: 1
 
-        BusyIndicator {
-            id: stageSpinner
-            running: visible
-        }
+        Row {
+            id: quitStageRow
+            anchors.centerIn: parent
+            spacing: 16
 
-        Label {
-            id: stageLabel
-            height: stageSpinner.height
-            text: stageText
-            font.pointSize: 20
-            verticalAlignment: Text.AlignVCenter
+            BusyIndicator {
+                id: stageSpinner
+                running: visible
+                width: 40
+                height: 40
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
-            wrapMode: Text.Wrap
+            Column {
+                spacing: 4
+                anchors.verticalCenter: parent.verticalCenter
+
+                Label {
+                    text: "NOVALING"
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#557462"
+                }
+
+                Label {
+                    id: stageLabel
+                    text: stageText
+                    font.pointSize: 16
+                    font.bold: true
+                    color: "#24372F"
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.Wrap
+                }
+            }
         }
     }
 

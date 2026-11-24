@@ -1,0 +1,280 @@
+---
+name: Release NovaLinG Moonlight (Windows & macOS)
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (blank = app/version.txt + short SHA)'
+        required: false
+        default: ''
+      publish_release:
+        description: 'Publish GitHub Release with installers and install scripts'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-novaling-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Resolve Version
+        id: ver
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            BASE_VER="$(tr -d '\r\n' < app/version.txt)"
+            SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+            VERSION="${BASE_VER}-${SHORT_SHA}"
+          fi
+          TAG="v${VERSION#v}"
+          VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-2025
+    env:
+      CI_VERSION: ${{ needs.prepare.outputs.version }}
+      QT_VERSION: '6.12.0'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          submodules: 'recursive'
+          fetch-depth: 1
+
+      - name: Download Dependencies (Windows)
+        shell: pwsh
+        run: ./setup-deps.ps1
+
+      - name: Install Qt (x64)
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: false
+          add-tools-to-path: false
+          tools: 'tools_qtcreator_gui'
+          version: ${{ env.QT_VERSION }}
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
+
+      - name: Install Qt (ARM64)
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: false
+          add-tools-to-path: false
+          arch: win64_msvc2022_arm64_cross_compiled
+          version: ${{ env.QT_VERSION }}
+
+      - name: Build x64 Binaries
+        shell: cmd
+        env:
+          QT_PATH: ${{ runner.workspace }}\Qt\${{ env.QT_VERSION }}\msvc2022_64\bin
+        run: |
+          set "PATH=%QT_PATH%;%PATH%"
+          scripts\build-arch.bat Release x64
+
+      - name: Build ARM64 Binaries
+        shell: cmd
+        env:
+          QT_PATH: ${{ runner.workspace }}\Qt\${{ env.QT_VERSION }}\msvc2022_arm64\bin
+        run: |
+          set "PATH=%QT_PATH%;%PATH%"
+          scripts\build-arch.bat Release arm64
+
+      - name: Build Windows Installer Bundle (.exe)
+        shell: cmd
+        run: scripts\generate-bundle.bat Release
+
+      - name: Collect Windows Release Assets
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ver = $env:CI_VERSION
+          $out = "dist-windows"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          $setup = Get-ChildItem -Path "build\installer-release" -Filter "MoonlightSetup-*.exe" | Select-Object -First 1
+          if (-not $setup) {
+            throw "MoonlightSetup-*.exe not found in build\installer-release"
+          }
+          Copy-Item $setup.FullName (Join-Path $out "NovaLinG-Moonlight-Setup-$ver.exe")
+
+          Compress-Archive -Path "build\deploy-x64-release\*" `
+            -DestinationPath (Join-Path $out "NovaLinG-Moonlight-Portable-x64-$ver.zip") -Force
+          Compress-Archive -Path "build\deploy-arm64-release\*" `
+            -DestinationPath (Join-Path $out "NovaLinG-Moonlight-Portable-arm64-$ver.zip") -Force
+
+      - name: Upload Windows Assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: novaling-moonlight-windows
+          path: dist-windows/*
+          if-no-files-found: error
+
+  build-macos:
+    needs: prepare
+    runs-on: macos-26
+    env:
+      CI_VERSION: ${{ needs.prepare.outputs.version }}
+      QT_VERSION: '6.11.2'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          submodules: 'recursive'
+          fetch-depth: 1
+
+      - name: Install create-dmg
+        run: |
+          brew install node
+          npm install --global create-dmg
+
+      - name: Install Qt (macOS)
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: true
+          add-tools-to-path: true
+          version: ${{ env.QT_VERSION }}
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
+
+      - name: Build macOS Universal DMG
+        run: bash scripts/generate-dmg.sh Release
+
+      - name: Collect macOS Release Assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist-macos
+          DMG="$(ls build/installer-Release/Moonlight-*.dmg | head -n 1)"
+          cp "${DMG}" "dist-macos/NovaLinG-Moonlight-${CI_VERSION}.dmg"
+
+      - name: Upload macOS Assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: novaling-moonlight-macos
+          path: dist-macos/*
+          compression-level: 0
+          if-no-files-found: error
+
+  package-release:
+    needs: [prepare, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+    steps:
+      - name: Checkout Scripts
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Download All Built Assets
+        uses: actions/download-artifact@v6
+        with:
+          path: release-staging
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS, latest.json, and Copy Install Scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp scripts/install.ps1 release-staging/install.ps1
+          cp scripts/install.sh release-staging/install.sh
+
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          stage = Path("release-staging")
+          version = os.environ["VERSION"]
+          tag = os.environ["TAG"]
+          repo = os.environ.get("GITHUB_REPOSITORY", "")
+
+          assets = {}
+          sums = []
+          for p in sorted(stage.iterdir()):
+              if not p.is_file() or p.name in ("SHA256SUMS.txt", "latest.json"):
+                  continue
+              digest = hashlib.sha256(p.read_bytes()).hexdigest()
+              sums.append(f"{digest}  {p.name}")
+              info = {"file": p.name, "size": p.stat().st_size, "sha256": digest}
+              if p.name.endswith(".exe"):
+                  assets["windows_installer"] = info
+              elif "Portable-x64" in p.name and p.name.endswith(".zip"):
+                  assets["windows_portable_x64"] = info
+              elif "Portable-arm64" in p.name and p.name.endswith(".zip"):
+                  assets["windows_portable_arm64"] = info
+              elif p.name.endswith(".dmg"):
+                  assets["macos_dmg"] = info
+
+          (stage / "SHA256SUMS.txt").write_text("\n".join(sums) + "\n", encoding="utf-8")
+          manifest = {
+              "product": "NovaLinG Moonlight",
+              "version": version,
+              "tag": tag,
+              "repository": repo,
+              "assets": assets,
+          }
+          (stage / "latest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload Combined Release Bundle
+        uses: actions/upload-artifact@v6
+        with:
+          name: novaling-moonlight-release-${{ env.VERSION }}
+          path: release-staging/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_release == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          NOTES=$(cat <<EOF
+          ## NovaLinG Moonlight v${VERSION}
+
+          ### 한줄 설치 (Windows PowerShell)
+          \`\`\`powershell
+          irm https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.ps1 | iex
+          \`\`\`
+
+          ### 한줄 설치 (macOS Terminal)
+          \`\`\`bash
+          curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.sh | bash
+          \`\`\`
+          EOF
+          )
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" release-staging/* --clobber
+          else
+            gh release create "${TAG}" release-staging/* \
+              --title "NovaLinG Moonlight ${TAG}" \
+              --notes "${NOTES}"
+          fi
