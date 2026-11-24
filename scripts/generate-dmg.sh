@@ -74,6 +74,9 @@ find $BUILD_FOLDER/app/Moonlight.app/ -name '*.dSYM' | xargs rm -rf
 if [ "$SIGNING_IDENTITY" != "" ]; then
   echo Signing app bundle
   codesign --force --deep --options runtime --timestamp --sign "$SIGNING_IDENTITY" $BUILD_FOLDER/app/Moonlight.app || fail "Signing failed!"
+else
+  echo Ad-hoc signing app bundle for Apple Silicon compatibility
+  codesign --force --deep --sign - $BUILD_FOLDER/app/Moonlight.app || fail "Ad-hoc signing failed!"
 fi
 
 echo Creating DMG
@@ -96,5 +99,9 @@ if [ "$NOTARY_KEYCHAIN_PROFILE" != "" ]; then
   xcrun stapler staple -v $INSTALLER_FOLDER/Moonlight.dmg || fail "Notary ticket stapling failed!"
 fi
 
-mv $INSTALLER_FOLDER/Moonlight.dmg $INSTALLER_FOLDER/Moonlight-$VERSION.dmg
+BUILT_DMG="$(ls "$INSTALLER_FOLDER"/*.dmg | head -n 1)"
+if [ -z "$BUILT_DMG" ]; then
+  fail "No DMG file generated in $INSTALLER_FOLDER"
+fi
+mv "$BUILT_DMG" "$INSTALLER_FOLDER/Moonlight-$VERSION.dmg"
 echo Build successful

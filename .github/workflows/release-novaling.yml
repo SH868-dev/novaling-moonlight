@@ -72,13 +72,16 @@ jobs:
         shell: pwsh
         run: ./setup-deps.ps1
 
+      - name: Install jom (Windows parallel make)
+        shell: pwsh
+        run: choco install -y jom --no-progress
+
       - name: Install Qt (x64)
         uses: jurplel/install-qt-action@v4
         with:
           cache: true
           set-env: false
           add-tools-to-path: false
-          tools: 'tools_qtcreator_gui'
           version: ${{ env.QT_VERSION }}
           aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
 
@@ -172,7 +175,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist-macos
-          DMG="$(ls build/installer-Release/Moonlight-*.dmg | head -n 1)"
+          DMG="$(ls build/installer-Release/*.dmg | head -n 1)"
           cp "${DMG}" "dist-macos/NovaLinG-Moonlight-${CI_VERSION}.dmg"
 
       - name: Upload macOS Assets
