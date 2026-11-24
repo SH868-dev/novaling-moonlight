@@ -34,13 +34,14 @@ die() {
 }
 
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/novaling-moonlight.XXXXXX")"
+WORK_DIR="${WORK_DIR//\/\///}"
 MOUNT_DIR=""
 
 cleanup() {
-  if [[ -n "${MOUNT_DIR}" ]] && mount | grep -q " on ${MOUNT_DIR} "; then
-    hdiutil detach "${MOUNT_DIR}" -quiet || hdiutil detach "${MOUNT_DIR}" -force -quiet || true
+  if [[ -n "${MOUNT_DIR}" ]]; then
+    hdiutil detach "${MOUNT_DIR}" -quiet 2>/dev/null || hdiutil detach "${MOUNT_DIR}" -force -quiet 2>/dev/null || true
   fi
-  rm -rf "${WORK_DIR}"
+  rm -rf "${WORK_DIR}" 2>/dev/null || true
 }
 trap cleanup EXIT
 
